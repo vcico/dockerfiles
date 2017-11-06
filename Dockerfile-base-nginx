@@ -1,0 +1,46 @@
+# --------------------------------------------------
+# 基础的nginx
+# --------------------------------------------------
+
+# 路径信息
+#  nginx path prefix: "/usr/local/nginx"
+#  nginx binary file: "/usr/local/nginx/sbin/nginx"
+#  nginx modules path: "/usr/local/nginx/modules"
+#  nginx configuration prefix: "/usr/local/nginx/conf"
+#  nginx configuration file: "/usr/local/nginx/conf/nginx.conf"
+#  nginx pid file: "/usr/local/nginx/logs/nginx.pid"
+#  nginx error log file: "/usr/local/nginx/logs/error.log"
+#  nginx http access log file: "/usr/local/nginx/logs/access.log"
+#  nginx http client request body temporary files: "client_body_temp"
+#  nginx http proxy temporary files: "proxy_temp"
+#  nginx http fastcgi temporary files: "fastcgi_temp"
+#  nginx http uwsgi temporary files: "uwsgi_temp"
+#  nginx http scgi temporary files: "scgi_temp"
+# --------------------------------------------------
+
+FROM ubuntu:16.04
+
+ARG NGINX_VERSION=1.13.6
+
+RUN apt-get update \
+	&& apt-get -y install wget gcc libpcre3-dev zlib1g-dev libssl-dev make \
+	&& wget http://nginx.org/download/nginx-$NGINX_VERSION.tar.gz \
+	&& tar -zxvf nginx-$NGINX_VERSION.tar.gz \
+	&& cd nginx-$NGINX_VERSION \
+	&& ./configure --prefix=/usr/local/nginx  --with-http_ssl_module \
+	&& make && make install \
+	&& cd ../ \
+	&& rm nginx-$NGINX_VERSION.tar.gz \
+	&& rm -r nginx-$NGINX_VERSION/ \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& apt-get purge -y --auto-remove wget gcc  make
+	
+EXPOSE 80
+	
+CMD ["/usr/local/nginx/sbin/nginx", "-g", "daemon off;"]
+
+# 为什么要使用daemon off？？？？？
+# docker 不是虚拟机 没有启动系统后台 只能通过前台运行程序 因此 需要关闭nginx默认的后台守护 
+# echo "daemon off"  > /usr/local/nginx/conf/nginx.conf 亦可
+# sudo docker run -p 80:80 -d --name nginx nginx:v1
+# 宿主机访问 localhost:80 可看到nginx欢迎页面
